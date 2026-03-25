@@ -1,0 +1,275 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── ENUMS ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  RESIDENT
+  MANAGER
+  ADMIN
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+enum AvailabilityStatus {
+  ACTIVE
+  RESERVED
+  CANCELLED
+  EXPIRED
+}
+
+enum ReservationStatus {
+  CONFIRMED
+  CANCELLED_BY_RESIDENT
+  CANCELLED_BY_OWNER
+  CANCELLED_BY_MANAGER
+  COMPLETED
+}
+
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  CLOSED
+}
+
+enum ActivityAction {
+  USER_LOGIN
+  USER_LOGOUT
+  USER_REGISTERED
+  USER_INVITED
+  USER_DEACTIVATED
+  USER_REACTIVATED
+  SPOT_CREATED
+  SPOT_ASSIGNED
+  SPOT_REASSIGNED
+  SPOT_UNASSIGNED
+  AVAILABILITY_CREATED
+  AVAILABILITY_UPDATED
+  AVAILABILITY_CANCELLED
+  RESERVATION_CREATED
+  RESERVATION_CONFIRMED
+  RESERVATION_CANCELLED
+  BULK_IMPORT_STARTED
+  BULK_IMPORT_COMPLETED
+  BULK_IMPORT_FAILED
+  DISPUTE_OPENED
+  DISPUTE_RESOLVED
+  NOTIFICATION_SENT
+}
+
+// ─── NEXTAUTH MODELS ──────────────────────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── CORE MODELS ─────────────────────────────────────────────────────────────
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  emailVerified   DateTime?
+  name            String
+  phone           String?
+  unitNumber      String?
+  role            Role      @default(RESIDENT)
+  isActive        Boolean   @default(true)
+  profileImageUrl String?
+  passwordHash    String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  accounts        Account[]
+  sessions        Session[]
+  ownedSpots      ParkingSpot[]      @relation("SpotOwner")
+  availabilities  SpotAvailability[] @relation("AvailabilityCreator")
+  reservations    Reservation[]      @relation("ReservationMaker")
+  invitesSent     Invite[]           @relation("InviteSender")
+  receivedInvite  Invite?            @relation("InviteRecipient")
+  activityLogs    ActivityLog[]      @relation("ActivityActor")
+  disputesOpened  Dispute[]          @relation("DisputeOpener")
+  disputesManaged Dispute[]          @relation("DisputeManager")
+  notifications   Notification[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Invite {
+  id           String       @id @default(cuid())
+  token        String       @unique @default(cuid())
+  email        String
+  status       InviteStatus @default(PENDING)
+  sentById     String
+  sentBy       User         @relation("InviteSender", fields: [sentById], references: [id])
+  acceptedById String?      @unique
+  acceptedBy   User?        @relation("InviteRecipient", fields: [acceptedById], references: [id])
+  expiresAt    DateTime
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([email])
+  @@index([token])
+  @@index([status])
+}
+
+model ParkingSpot {
+  id         String   @id @default(cuid())
+  spotNumber String   @unique
+  floor      Int
+  section    String?
+  notes      String?
+  isActive   Boolean  @default(true)
+  ownerId    String?
+  owner      User?    @relation("SpotOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  availabilities SpotAvailability[]
+  activityLogs   ActivityLog[]
+
+  @@index([ownerId])
+  @@index([floor])
+  @@index([spotNumber])
+}
+
+model SpotAvailability {
+  id          String             @id @default(cuid())
+  spotId      String
+  spot        ParkingSpot        @relation(fields: [spotId], references: [id], onDelete: Cascade)
+  createdById String
+  createdBy   User               @relation("AvailabilityCreator", fields: [createdById], references: [id])
+  startDate   DateTime           @db.Date
+  endDate     DateTime           @db.Date
+  status      AvailabilityStatus @default(ACTIVE)
+  notes       String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  reservations Reservation[]
+
+  @@index([spotId])
+  @@index([startDate, endDate])
+  @@index([status])
+}
+
+model Reservation {
+  id             String            @id @default(cuid())
+  availabilityId String
+  availability   SpotAvailability  @relation(fields: [availabilityId], references: [id], onDelete: Cascade)
+  reservedById   String
+  reservedBy     User              @relation("ReservationMaker", fields: [reservedById], references: [id])
+  startDate      DateTime          @db.Date
+  endDate        DateTime          @db.Date
+  visitorName    String?
+  visitorVehicle String?
+  notes          String?
+  status         ReservationStatus @default(CONFIRMED)
+  cancelReason   String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  dispute Dispute?
+
+  @@index([reservedById])
+  @@index([availabilityId])
+  @@index([startDate, endDate])
+  @@index([status])
+}
+
+model Dispute {
+  id            String        @id @default(cuid())
+  reservationId String        @unique
+  reservation   Reservation   @relation(fields: [reservationId], references: [id])
+  openedById    String
+  openedBy      User          @relation("DisputeOpener", fields: [openedById], references: [id])
+  managedById   String?
+  managedBy     User?         @relation("DisputeManager", fields: [managedById], references: [id])
+  description   String        @db.Text
+  resolution    String?       @db.Text
+  status        DisputeStatus @default(OPEN)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([status])
+  @@index([openedById])
+}
+
+model ActivityLog {
+  id         String         @id @default(cuid())
+  action     ActivityAction
+  actorId    String?
+  actor      User?          @relation("ActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+  spotId     String?
+  spot       ParkingSpot?   @relation(fields: [spotId], references: [id], onDelete: SetNull)
+  targetId   String?
+  targetType String?
+  meta       Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime       @default(now())
+
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
+  @@index([targetId, targetType])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  type      String
+  linkHref  String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+}

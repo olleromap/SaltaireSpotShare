@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Search, Car, Bell } from "lucide-react";
+import { Home, Search, Car, Bell, UserCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 interface NotificationData {
@@ -25,6 +25,7 @@ export default function MobileNav() {
     { href: "/reserve", label: "Find Spot", icon: Search },
     { href: "/my-spot", label: "My Spot", icon: Car },
     { href: "/notifications", label: "Alerts", icon: Bell, badge: unread },
+    { href: "/account", label: "Account", icon: UserCircle },
   ];
 
   return (

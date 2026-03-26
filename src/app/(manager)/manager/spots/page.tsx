@@ -20,9 +20,12 @@ export default async function SpotsPage({
     orderBy: [{ floor: "asc" }, { spotNumber: "asc" }],
   });
 
-  const byFloor = [1,2,3,4,5,6].map((f) => ({
+  const spotNum = (s: { spotNumber: string }) =>
+    parseInt(s.spotNumber.split("-")[1] ?? "0", 10);
+
+  const byFloor = [1, 2, 3, 4, 5, 6].map((f) => ({
     floor: f,
-    spots: spots.filter((s) => s.floor === f),
+    spots: spots.filter((s) => s.floor === f).sort((a, b) => spotNum(a) - spotNum(b)),
   }));
 
   return (

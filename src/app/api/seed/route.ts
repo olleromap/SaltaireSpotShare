@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     residents.push(resident);
   }
 
-  const spots = await prisma.parkingSpot.findMany({ orderBy: { spotNumber: "asc" }, take: 10 });
+  const spots = await prisma.parkingSpot.findMany({ orderBy: [{ floor: "asc" }, { spotNumber: "asc" }], take: 10 });
   for (let i = 0; i < residents.length; i++) {
     await prisma.parkingSpot.update({
       where: { id: spots[i].id },

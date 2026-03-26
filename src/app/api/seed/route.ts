@@ -21,16 +21,17 @@ export async function POST(req: NextRequest) {
     },
   });
 
+  const floorSpotCounts: Record<number, number> = { 1: 36, 2: 64, 3: 72, 4: 73, 5: 73, 6: 73 };
   const spotPromises = [];
-  for (let floor = 1; floor <= 6; floor++) {
-    for (let i = 1; i <= 60; i++) {
+  for (const [floorStr, count] of Object.entries(floorSpotCounts)) {
+    const floor = Number(floorStr);
+    for (let i = 1; i <= count; i++) {
       const spotNumber = `${floor}-${String(i).padStart(2, "0")}`;
-      const section = i <= 20 ? "A" : i <= 40 ? "B" : "C";
       spotPromises.push(
         prisma.parkingSpot.upsert({
           where: { spotNumber },
           update: {},
-          create: { spotNumber, floor, section, isActive: true },
+          create: { spotNumber, floor, isActive: true },
         })
       );
     }

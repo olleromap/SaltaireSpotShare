@@ -28,7 +28,7 @@ async function main() {
   for (const [floorStr, count] of Object.entries(floorSpotCounts)) {
     const floor = Number(floorStr);
     for (let i = 1; i <= count; i++) {
-      const spotNumber = `${floor}-${String(i).padStart(2, "0")}`;
+      const spotNumber = `R${floor}-${String(i).padStart(2, "0")}`;
       spotPromises.push(
         prisma.parkingSpot.upsert({
           where: { spotNumber },

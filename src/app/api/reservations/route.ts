@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
       userId: ownerId,
       type: "reservation_confirmed",
       title: "Your spot has been reserved",
-      body: `${session.user.name} reserved spot ${reservation.availability.spot.spotNumber} for ${startDate} – ${endDate}`,
+      body: `${session.user.name} reserved spot ${reservation.availability.spot.spotNumber} from ${new Date(startDate).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} – ${new Date(endDate).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`,
       linkHref: `/my-spot`,
     });
   }
@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
     userId: session.user.id,
     type: "reservation_confirmed",
     title: "Reservation confirmed!",
-    body: `Spot ${reservation.newReservation.availability.spot.spotNumber} reserved for ${startDate} – ${endDate}`,
+    body: `Spot ${reservation.newReservation.availability.spot.spotNumber} reserved from ${new Date(startDate).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} – ${new Date(endDate).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`,
     linkHref: `/reservations/${reservation.newReservation.id}`,
   });
 

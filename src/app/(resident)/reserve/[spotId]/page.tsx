@@ -24,7 +24,8 @@ export default function SpotDetailPage({ params }: { params: Promise<{ spotId: s
   const router = useRouter();
   const searchParams = useSearchParams();
   const availabilityId = searchParams.get("availabilityId") ?? "";
-  const defaultStart = searchParams.get("startDate") ?? new Date().toISOString().split("T")[0];
+  const nowLocal = new Date().toLocaleString("sv").slice(0, 16).replace(" ", "T");
+  const defaultStart = searchParams.get("startDate") ?? nowLocal;
   const defaultEnd = searchParams.get("endDate") ?? defaultStart;
 
   const [spot, setSpot] = useState<SpotData | null>(null);
@@ -106,18 +107,19 @@ export default function SpotDetailPage({ params }: { params: Promise<{ spotId: s
 
       {step === 1 && (
         <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Calendar size={16} /> Choose dates</CardTitle></CardHeader>
+          <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Calendar size={16} /> Choose date &amp; time</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-3">
               <div className="space-y-2">
                 <Label>From</Label>
-                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} min={new Date().toISOString().split("T")[0]} />
+                <Input type="datetime-local" value={startDate} onChange={(e) => setStartDate(e.target.value)} min={new Date().toLocaleString("sv").slice(0, 16).replace(" ", "T")} />
               </div>
               <div className="space-y-2">
                 <Label>Until</Label>
-                <Input type="date" value={endDate} min={startDate} onChange={(e) => setEndDate(e.target.value)} />
+                <Input type="datetime-local" value={endDate} min={startDate} onChange={(e) => setEndDate(e.target.value)} />
               </div>
             </div>
+            <p className="text-xs text-slate-400">Minimum booking duration is 8 hours.</p>
             <Button className="w-full bg-[#1e4d8c] hover:bg-[#163a6a]" onClick={() => setStep(2)}>
               Continue
             </Button>
@@ -156,7 +158,7 @@ export default function SpotDetailPage({ params }: { params: Promise<{ spotId: s
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">Dates</span>
-                <span className="font-medium">{format(new Date(startDate), "MMM d")} – {format(new Date(endDate), "MMM d, yyyy")}</span>
+                <span className="font-medium">{format(new Date(startDate), "MMM d, h:mm a")} – {format(new Date(endDate), "MMM d, h:mm a")}</span>
               </div>
               {visitorName && (
                 <div className="flex justify-between text-sm">

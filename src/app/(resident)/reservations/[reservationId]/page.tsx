@@ -90,11 +90,11 @@ export default async function ReservationDetailPage({
         <CardContent className="space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-slate-500">From</span>
-            <span className="font-medium">{format(reservation.startDate, "EEEE, MMMM d, yyyy")}</span>
+            <span className="font-medium">{format(reservation.startDate, "EEE, MMM d, yyyy h:mm a")}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-slate-500">Until</span>
-            <span className="font-medium">{format(reservation.endDate, "EEEE, MMMM d, yyyy")}</span>
+            <span className="font-medium">{format(reservation.endDate, "EEE, MMM d, yyyy h:mm a")}</span>
           </div>
         </CardContent>
       </Card>

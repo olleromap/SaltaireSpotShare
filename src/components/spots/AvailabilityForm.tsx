@@ -20,11 +20,11 @@ export default function AvailabilityForm({ spotId, onSuccess }: Props) {
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const today = new Date().toISOString().split("T")[0];
+  const nowLocal = new Date().toLocaleString("sv").slice(0, 16).replace(" ", "T");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (endDate < startDate) { toast.error("End date must be after start date"); return; }
+    if (new Date(endDate) <= new Date(startDate)) { toast.error("End must be after start"); return; }
     setLoading(true);
     const res = await fetch("/api/availability", {
       method: "POST",
@@ -50,9 +50,9 @@ export default function AvailabilityForm({ spotId, onSuccess }: Props) {
           <Label htmlFor="startDate">From</Label>
           <Input
             id="startDate"
-            type="date"
+            type="datetime-local"
             value={startDate}
-            min={today}
+            min={nowLocal}
             onChange={(e) => setStartDate(e.target.value)}
             required
           />
@@ -61,9 +61,9 @@ export default function AvailabilityForm({ spotId, onSuccess }: Props) {
           <Label htmlFor="endDate">Until</Label>
           <Input
             id="endDate"
-            type="date"
+            type="datetime-local"
             value={endDate}
-            min={startDate || today}
+            min={startDate || nowLocal}
             onChange={(e) => setEndDate(e.target.value)}
             required
           />

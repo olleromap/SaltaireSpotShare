@@ -26,9 +26,9 @@ interface AvailabilityItem {
 }
 
 export default function ReservePage() {
-  const today = new Date().toISOString().split("T")[0];
-  const [startDate, setStartDate] = useState(today);
-  const [endDate, setEndDate] = useState(today);
+  const nowLocal = new Date().toLocaleString("sv").slice(0, 16).replace(" ", "T");
+  const [startDate, setStartDate] = useState(nowLocal);
+  const [endDate, setEndDate] = useState(nowLocal);
   const [floor, setFloor] = useState("");
 
   const params = new URLSearchParams();
@@ -55,11 +55,11 @@ export default function ReservePage() {
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
             <Label className="text-xs text-slate-500">From</Label>
-            <Input type="date" value={startDate} min={today} onChange={(e) => setStartDate(e.target.value)} />
+            <Input type="datetime-local" value={startDate} min={nowLocal} onChange={(e) => setStartDate(e.target.value)} />
           </div>
           <div className="space-y-1">
             <Label className="text-xs text-slate-500">Until</Label>
-            <Input type="date" value={endDate} min={startDate || today} onChange={(e) => setEndDate(e.target.value)} />
+            <Input type="datetime-local" value={endDate} min={startDate || nowLocal} onChange={(e) => setEndDate(e.target.value)} />
           </div>
         </div>
         <div className="space-y-1">
@@ -117,7 +117,7 @@ export default function ReservePage() {
                           <span>Floor {item.spot.floor}{item.spot.section ? `, Section ${item.spot.section}` : ""}</span>
                         </div>
                         <div className="text-sm text-slate-400 mt-1">
-                          Available {format(new Date(item.startDate), "MMM d")} – {format(new Date(item.endDate), "MMM d")}
+                          Available {format(new Date(item.startDate), "MMM d, h:mm a")} – {format(new Date(item.endDate), "MMM d, h:mm a")}
                         </div>
                         {item.notes && <p className="text-xs text-slate-400 truncate mt-1">{item.notes}</p>}
                       </div>

@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
         userId: r.id,
         type: "spot_available",
         title: "Spot Available",
-        body: `Spot ${spot.spotNumber} (Floor ${spot.floor}) is available ${startDate} – ${endDate}`,
+        body: `Spot ${spot.spotNumber} (Floor ${spot.floor}) is available from ${new Date(startDate).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} – ${new Date(endDate).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`,
         linkHref: `/reserve/${spotId}`,
       });
     }

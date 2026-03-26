@@ -31,8 +31,10 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
 const UpdateSpotSchema = z.object({
   spotNumber: z.string().optional(),
-  floor: z.number().int().min(1).max(6).optional(),
-  section: z.string().optional(),
+  floor: z.number().int().min(1).optional(),
+  section: z.string().optional().nullable(),
+  type: z.enum(["REGULAR", "TANDEM", "HANDICAPPED"]).optional(),
+  hasEV: z.boolean().optional(),
   notes: z.string().optional().nullable(),
   ownerId: z.string().cuid().optional().nullable(),
   isActive: z.boolean().optional(),

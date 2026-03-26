@@ -43,6 +43,12 @@ enum DisputeStatus {
   CLOSED
 }
 
+enum SpotType {
+  REGULAR
+  TANDEM
+  HANDICAPPED
+}
+
 enum ActivityAction {
   USER_LOGIN
   USER_LOGOUT
@@ -158,12 +164,14 @@ model Invite {
 }
 
 model ParkingSpot {
-  id         String   @id @default(cuid())
-  spotNumber String   @unique
+  id         String    @id @default(cuid())
+  spotNumber String    @unique
   floor      Int
   section    String?
+  type       SpotType  @default(REGULAR)
+  hasEV      Boolean   @default(false)
   notes      String?
-  isActive   Boolean  @default(true)
+  isActive   Boolean   @default(true)
   ownerId    String?
   owner      User?    @relation("SpotOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   createdAt  DateTime @default(now())
@@ -183,8 +191,8 @@ model SpotAvailability {
   spot        ParkingSpot        @relation(fields: [spotId], references: [id], onDelete: Cascade)
   createdById String
   createdBy   User               @relation("AvailabilityCreator", fields: [createdById], references: [id])
-  startDate   DateTime           @db.Date
-  endDate     DateTime           @db.Date
+  startDate   DateTime
+  endDate     DateTime
   status      AvailabilityStatus @default(ACTIVE)
   notes       String?
   createdAt   DateTime           @default(now())
@@ -203,8 +211,8 @@ model Reservation {
   availability   SpotAvailability  @relation(fields: [availabilityId], references: [id], onDelete: Cascade)
   reservedById   String
   reservedBy     User              @relation("ReservationMaker", fields: [reservedById], references: [id])
-  startDate      DateTime          @db.Date
-  endDate        DateTime          @db.Date
+  startDate      DateTime
+  endDate        DateTime
   visitorName    String?
   visitorVehicle String?
   notes          String?

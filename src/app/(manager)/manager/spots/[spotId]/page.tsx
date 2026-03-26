@@ -15,6 +15,8 @@ interface SpotData {
   spotNumber: string;
   floor: number;
   section: string | null;
+  type: "REGULAR" | "TANDEM" | "HANDICAPPED";
+  hasEV: boolean;
   notes: string | null;
   isActive: boolean;
   owner: { id: string; name: string; email: string } | null;
@@ -33,6 +35,8 @@ export default function EditSpotPage() {
   const [spot, setSpot] = useState<SpotData | null>(null);
   const [users, setUsers] = useState<UserOption[]>([]);
   const [ownerId, setOwnerId] = useState<string>("");
+  const [spotType, setSpotType] = useState<"REGULAR" | "TANDEM" | "HANDICAPPED">("REGULAR");
+  const [hasEV, setHasEV] = useState(false);
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -44,6 +48,8 @@ export default function EditSpotPage() {
       if (spotData.data) {
         setSpot(spotData.data);
         setOwnerId(spotData.data.owner?.id ?? "");
+        setSpotType(spotData.data.type ?? "REGULAR");
+        setHasEV(spotData.data.hasEV ?? false);
         setNotes(spotData.data.notes ?? "");
       }
       if (userData.data) setUsers(userData.data);
@@ -56,7 +62,7 @@ export default function EditSpotPage() {
     const res = await fetch(`/api/spots/${spotId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ownerId: ownerId || null, notes: notes || null }),
+      body: JSON.stringify({ ownerId: ownerId || null, type: spotType, hasEV, notes: notes || null }),
     });
     setLoading(false);
     if (res.ok) {
@@ -100,8 +106,30 @@ export default function EditSpotPage() {
               </select>
             </div>
             <div className="space-y-2">
+              <Label>Spot type</Label>
+              <select
+                className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm"
+                value={spotType}
+                onChange={(e) => setSpotType(e.target.value as "REGULAR" | "TANDEM" | "HANDICAPPED")}
+              >
+                <option value="REGULAR">Regular</option>
+                <option value="TANDEM">Tandem</option>
+                <option value="HANDICAPPED">Handicapped</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-3">
+              <input
+                id="hasEV"
+                type="checkbox"
+                checked={hasEV}
+                onChange={(e) => setHasEV(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <Label htmlFor="hasEV">EV charger installed</Label>
+            </div>
+            <div className="space-y-2">
               <Label>Notes</Label>
-              <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. EV charger, compact only" />
+              <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. Compact only, back-in required" />
             </div>
             <div className="flex gap-3">
               <Button variant="outline" type="button" onClick={() => router.back()}>Cancel</Button>

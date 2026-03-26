@@ -10,8 +10,10 @@ const ImportRowSchema = z.object({
   unit_number: z.string().optional(),
   phone: z.string().optional(),
   spot_number: z.string().optional(),
-  floor: z.coerce.number().int().min(1).max(6).optional(),
+  floor: z.coerce.number().int().min(1).optional(),
   section: z.string().optional(),
+  type: z.enum(["REGULAR", "TANDEM", "HANDICAPPED"]).optional(),
+  has_ev: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -96,11 +98,20 @@ export async function processBulkImport(
           if (user) {
             await tx.parkingSpot.upsert({
               where: { spotNumber: row.spot_number },
-              update: { ownerId: user.id, floor: row.floor ?? 1, section: row.section },
+              update: {
+                ownerId: user.id,
+                floor: row.floor ?? 1,
+                section: row.section,
+                type: row.type ?? "REGULAR",
+                hasEV: ["true", "yes", "1"].includes((row.has_ev ?? "").toLowerCase()),
+                notes: row.notes,
+              },
               create: {
                 spotNumber: row.spot_number,
                 floor: row.floor ?? 1,
                 section: row.section,
+                type: row.type ?? "REGULAR",
+                hasEV: ["true", "yes", "1"].includes((row.has_ev ?? "").toLowerCase()),
                 notes: row.notes,
                 ownerId: user.id,
               },

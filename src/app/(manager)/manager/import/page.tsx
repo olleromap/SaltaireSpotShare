@@ -53,10 +53,10 @@ export default function ImportPage() {
         <CardHeader><CardTitle className="text-base">Expected columns</CardTitle></CardHeader>
         <CardContent>
           <div className="bg-slate-50 rounded-lg p-3 font-mono text-sm text-slate-600">
-            email, name, unit_number, phone, spot_number, floor, section, type, has_ev, notes
+            spot_number, floor, type, has_ev, owner_email, owner_unit
           </div>
           <p className="text-xs text-slate-400 mt-2">
-            Required: <strong>email</strong> and <strong>name</strong>. All other columns are optional.
+            Required: <strong>owner_email</strong>. Also accepted: <strong>email</strong>, <strong>name</strong>, <strong>unit_number</strong>, <strong>phone</strong>, <strong>notes</strong>. All other columns are optional.
             <br />
             <strong>type</strong>: REGULAR, TANDEM, or HANDICAPPED (defaults to REGULAR).
             <strong> has_ev</strong>: true/yes/1 for EV charger installed.

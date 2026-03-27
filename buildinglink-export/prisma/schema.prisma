@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Snapshot {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  source      String   // "manual_upload" | "automation" | "scheduled"
+  fileName    String?
+  recordCount Int
+  status      String   @default("pending_cleanup") // "pending_cleanup" | "ready" | "exported"
+  notes       String?
+  records     Record[]
+  exports     Export[]
+
+  @@index([createdAt])
+}
+
+model Record {
+  id         String   @id @default(cuid())
+  snapshotId String
+  snapshot   Snapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  rowIndex   Int
+  data       Json
+  changeType String?  // "added" | "modified" | "removed" | null
+  isEdited   Boolean  @default(false)
+  isExcluded Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([snapshotId])
+  @@index([snapshotId, changeType])
+}
+
+model MappingProfile {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  targetSchema Json
+  mappings     Json
+  isTemplate   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  exports      Export[]
+}
+
+model Export {
+  id               String         @id @default(cuid())
+  snapshotId       String
+  snapshot         Snapshot       @relation(fields: [snapshotId], references: [id])
+  mappingProfileId String
+  mappingProfile   MappingProfile @relation(fields: [mappingProfileId], references: [id])
+  exportType       String         // "full" | "delta"
+  format           String         // "csv" | "xlsx"
+  recordCount      Int
+  deltaBaseId      String?
+  createdAt        DateTime       @default(now())
+
+  @@index([snapshotId])
+  @@index([createdAt])
+}
+
+model ScheduledJob {
+  id          String    @id @default(cuid())
+  enabled     Boolean   @default(false)
+  cronPattern String    @default("0 2 * * *")
+  lastRunAt   DateTime?
+  nextRunAt   DateTime?
+  lastStatus  String?   // "success" | "failed"
+  lastMessage String?
+  credentialId String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Credential {
+  id        String   @id @default(cuid())
+  service   String   // "buildinglink"
+  label     String
+  username  String
+  password  String   // AES-256-GCM encrypted, base64
+  iv        String
+  authTag   String
+  loginUrl  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

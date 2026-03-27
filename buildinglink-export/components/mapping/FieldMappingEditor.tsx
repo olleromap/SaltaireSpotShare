@@ -25,6 +25,7 @@ import type { MappingRule, TargetField } from "@/lib/export-engine"
 interface Profile {
   id: string
   name: string
+  targetSystem: string | null
   targetSchema: TargetField[]
   mappings: MappingRule[]
 }
@@ -232,7 +233,12 @@ export function FieldMappingEditor({ profileId }: { profileId: string }) {
       await fetch(`/api/mapping-profiles/${profileId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targetSchema, mappings: cleanMappings }),
+        body: JSON.stringify({
+          name: profile.name,
+          targetSystem: profile.targetSystem,
+          targetSchema,
+          mappings: cleanMappings,
+        }),
       })
       toast.success("Mapping profile saved")
       router.push(`/export?profileId=${profileId}${snapshotId ? `&snapshotId=${snapshotId}` : ""}`)

@@ -15,6 +15,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const body = await req.json() as {
     name?: string
     description?: string
+    targetSystem?: string | null
     targetSchema?: unknown[]
     mappings?: unknown[]
   }
@@ -24,6 +25,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     data: {
       ...(body.name && { name: body.name }),
       ...(body.description !== undefined && { description: body.description }),
+      ...(body.targetSystem !== undefined && { targetSystem: body.targetSystem }),
       ...(body.targetSchema && { targetSchema: body.targetSchema as object[] }),
       ...(body.mappings && { mappings: body.mappings as object[] }),
     },

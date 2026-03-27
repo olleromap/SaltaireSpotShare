@@ -40,12 +40,16 @@ model MappingProfile {
   id           String   @id @default(cuid())
   name         String
   description  String?
+  // Slug identifying the target system: "pdk_io" | "evite" | "latch" | "generic" | custom string
+  targetSystem String?
   targetSchema Json
   mappings     Json
   isTemplate   Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   exports      Export[]
+
+  @@index([targetSystem])
 }
 
 model Export {

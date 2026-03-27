@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { GripVertical, Plus, Trash2, ChevronRight, Loader2 } from "lucide-react"
+import { GripVertical, Plus, Trash2, ChevronRight, Loader2, Upload } from "lucide-react"
 import {
   DndContext,
   closestCenter,
@@ -21,6 +21,7 @@ import {
 import { CSS } from "@dnd-kit/utilities"
 import { TRANSFORMS, type TransformKey } from "@/lib/transforms"
 import type { MappingRule, TargetField } from "@/lib/export-engine"
+import { GroupsPicker } from "./GroupsPicker"
 
 interface Profile {
   id: string
@@ -38,6 +39,7 @@ function SortableTargetRow({
   row,
   sourceFields,
   mapping,
+  availableGroups,
   onFieldChange,
   onMappingChange,
   onRemove,
@@ -45,6 +47,7 @@ function SortableTargetRow({
   row: TargetRow
   sourceFields: string[]
   mapping: MappingRule | undefined
+  availableGroups: string[]
   onFieldChange: (key: string, field: string) => void
   onMappingChange: (targetField: string, rule: Partial<MappingRule>) => void
   onRemove: (key: string) => void
@@ -112,14 +115,24 @@ function SortableTargetRow({
 
       {/* Static value (shown when no source field or transform = static_value) */}
       {(mapping?.transform === "static_value" || !mapping?.sourceField) && (
-        <input
-          value={mapping?.staticValue ?? ""}
-          onChange={(e) =>
-            onMappingChange(row.field, { staticValue: e.target.value })
-          }
-          placeholder="value"
-          className="w-24 rounded border border-gray-200 px-2 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
+        row.field.toLowerCase() === "groups" && availableGroups.length > 0 ? (
+          <div className="flex-1">
+            <GroupsPicker
+              availableGroups={availableGroups}
+              value={mapping?.staticValue ?? ""}
+              onChange={(val) => onMappingChange(row.field, { staticValue: val })}
+            />
+          </div>
+        ) : (
+          <input
+            value={mapping?.staticValue ?? ""}
+            onChange={(e) =>
+              onMappingChange(row.field, { staticValue: e.target.value })
+            }
+            placeholder="value"
+            className="w-24 rounded border border-gray-200 px-2 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+        )
       )}
 
       {/* Required toggle */}
@@ -147,7 +160,10 @@ export function FieldMappingEditor({ profileId }: { profileId: string }) {
   const [sourceFields, setSourceFields] = useState<string[]>([])
   const [targetRows, setTargetRows] = useState<TargetRow[]>([])
   const [mappings, setMappings] = useState<MappingRule[]>([])
+  const [availableGroups, setAvailableGroups] = useState<string[]>([])
+  const [isImportingGroups, setIsImportingGroups] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const groupsFileRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
   const snapshotId = searchParams.get("snapshotId")
@@ -174,6 +190,35 @@ export function FieldMappingEditor({ profileId }: { profileId: string }) {
         if (data.records[0]) setSourceFields(Object.keys(data.records[0].data))
       })
   }, [snapshotId])
+
+  useEffect(() => {
+    if (!profile || profile.targetSystem !== "pdk_io") return
+    fetch(`/api/mapping-profiles/${profileId}/reference-data`)
+      .then((r) => r.json())
+      .then((data: { groups: string[] }) => setAvailableGroups(data.groups ?? []))
+  }, [profileId, profile])
+
+  async function importGroupsFile(file: File) {
+    setIsImportingGroups(true)
+    try {
+      const fd = new FormData()
+      fd.append("file", file)
+      const res = await fetch(`/api/mapping-profiles/${profileId}/reference-data`, {
+        method: "POST",
+        body: fd,
+      })
+      const data = await res.json() as { groups?: string[]; error?: string }
+      if (!res.ok) {
+        toast.error(data.error ?? "Failed to import groups")
+        return
+      }
+      setAvailableGroups(data.groups ?? [])
+      toast.success(`${data.groups?.length ?? 0} groups imported`)
+    } finally {
+      setIsImportingGroups(false)
+      if (groupsFileRef.current) groupsFileRef.current.value = ""
+    }
+  }
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
@@ -278,6 +323,39 @@ export function FieldMappingEditor({ profileId }: { profileId: string }) {
         </div>
       )}
 
+      {/* PDK.io groups import */}
+      {profile.targetSystem === "pdk_io" && (
+        <div className="flex items-center gap-2">
+          <input
+            ref={groupsFileRef}
+            type="file"
+            accept=".json"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) importGroupsFile(file)
+            }}
+          />
+          <button
+            onClick={() => groupsFileRef.current?.click()}
+            disabled={isImportingGroups}
+            className="flex items-center gap-1.5 rounded border border-gray-200 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+          >
+            {isImportingGroups ? (
+              <Loader2 size={12} className="animate-spin" />
+            ) : (
+              <Upload size={12} />
+            )}
+            {isImportingGroups ? "Importing…" : "Import PDK.io groups JSON"}
+          </button>
+          {availableGroups.length > 0 && (
+            <span className="text-xs text-gray-400">
+              {availableGroups.length} groups loaded
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Target column rows */}
       <div className="space-y-1">
         <div className="flex items-center gap-2 px-3 text-xs font-medium text-gray-400 mb-1">
@@ -297,6 +375,7 @@ export function FieldMappingEditor({ profileId }: { profileId: string }) {
                 row={row}
                 sourceFields={sourceFields}
                 mapping={mappings.find((m) => m.targetField === row.field)}
+                availableGroups={availableGroups}
                 onFieldChange={updateFieldName}
                 onMappingChange={updateMapping}
                 onRemove={removeRow}

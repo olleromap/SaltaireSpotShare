@@ -42,9 +42,11 @@ model MappingProfile {
   description  String?
   // Slug identifying the target system: "pdk_io" | "evite" | "latch" | "generic" | custom string
   targetSystem String?
-  targetSchema Json
-  mappings     Json
-  isTemplate   Boolean  @default(false)
+  targetSchema  Json
+  mappings      Json
+  // Uploaded reference data, e.g. PDK.io group list: { "groups": ["Residents", "Building Access"] }
+  referenceData Json?
+  isTemplate    Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   exports      Export[]

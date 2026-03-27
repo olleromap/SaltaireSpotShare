@@ -27,7 +27,12 @@ const BUILT_IN_TEMPLATES = [
       { field: "First Name", required: true, hint: "Resident first name" },
       { field: "Last Name", required: true, hint: "Resident last name" },
       { field: "Email", required: false, hint: "Used for Bluetooth / Mobile App credential invites" },
-      { field: "Groups", required: false, hint: 'e.g. "Residents" — creates the group if it does not exist' },
+      { field: "Unit", required: false, hint: "Unit number from BuildingLink (typically 'Unit #' column)" },
+      {
+        field: "Groups",
+        required: false,
+        hint: 'Comma-separate multiple groups: "Residents,Building Access". Import your PDK.io groups JSON to pick from a list.',
+      },
       { field: "Enabled", required: false, hint: "1 = active, 0 = disabled" },
       { field: "Active Date", required: false, hint: "YYYY-MM-DD format" },
       { field: "Expire Date", required: false, hint: "YYYY-MM-DD — leave blank for no expiry" },
@@ -37,6 +42,8 @@ const BUILT_IN_TEMPLATES = [
       { sourceField: "First Name", targetField: "First Name", transform: "trim" },
       { sourceField: "Last Name", targetField: "Last Name", transform: "trim" },
       { sourceField: "Email", targetField: "Email", transform: "lowercase" },
+      // "Unit #" is the typical BuildingLink column name — users can change it in the editor
+      { sourceField: "Unit #", targetField: "Unit", transform: "trim" },
       { sourceField: null, targetField: "Groups", transform: "static_value", staticValue: "Residents" },
       { sourceField: null, targetField: "Enabled", transform: "static_value", staticValue: "1" },
     ],
